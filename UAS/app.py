@@ -52,44 +52,42 @@ def apply_dilation_erosion(image, operation_type):
         result_image = cv2.dilate(image, kernel, iterations=1)
     elif operation_type == "Erosion":
         result_image = cv2.erode(image, kernel, iterations=1)
+    elif operation_type == "Countour":
+        return apply_contour(image)
     else:
         result_image = image
 
     return result_image
 
-def apply_segmentation(image, segmentation_type, seed_point=None, threshold=None):
+def apply_contour(image):
+    # Ubah citra menjadi citra grayscale jika belum
+    if len(image.shape) > 2:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    # Ambil kontur menggunakan metode yang diperbaiki
+    img_binary = cv2.threshold(image, 170, 255, cv2.THRESH_BINARY)[1]
+    img_binary = ~img_binary
+    (contours, _) = cv2.findContours(img_binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    count = len(contours)
+
+    # Membuat salinan citra untuk menggambar kontur tanpa memengaruhi citra asli
+    image_with_contour = image.copy()
+
+    # Gambar kontur pada citra hasil pemrosesan
+    cv2.drawContours(image_with_contour, contours, -1, (0, 255, 0), 2)
+
+    # Tambahkan teks hanya jika terdapat kontur
+    if count > 0:
+        cv2.putText(image_with_contour, f"Objek: {count}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2)
+    font_scale = 0.1
+    return image_with_contour
+
+
+def apply_segmentation(image, segmentation_type):
     if segmentation_type == "Edge Detection":
         return cv2.Canny(image, 100, 200)
-    elif segmentation_type == "Regional Growing":
-        return apply_regional_growing(image, seed_point, threshold)
     else:
         return image
-
-def apply_regional_growing(image, seed_point, threshold):
-    if seed_point is None or threshold is None:
-        return image
-
-    segmented_image = image.copy()
-
-    if len(segmented_image.shape) > 2:
-        segmented_image = cv2.cvtColor(segmented_image, cv2.COLOR_BGR2GRAY)
-
-    condition = np.zeros_like(segmented_image, dtype=np.uint8)
-    condition[seed_point[1], seed_point[0]] = 1
-
-    while True:
-        last_condition = condition.copy()
-        condition = cv2.dilate(condition, np.ones((3, 3), np.uint8), iterations=1)
-        new_pixels = np.logical_and(segmented_image > 0, np.logical_and(segmented_image <= threshold, condition > 0))
-        condition[new_pixels] = 1
-
-        if np.array_equal(last_condition, condition):
-            break
-
-    result = np.zeros_like(segmented_image)
-    result[condition > 0] = segmented_image[condition > 0]
-
-    return result
 
 def save_as_pdf(image):
     pdf_output = BytesIO()
@@ -125,26 +123,15 @@ def main():
         filter_type = st.sidebar.selectbox("Pilih filter", ["None", "Grayscale", "HSV", "Lowpass", "Highpass", "Gaussian", "Emboss", "Inverse"])
 
         st.sidebar.header("Metode Segmentasi")
-        segmentation_type = st.sidebar.selectbox("Pilih metode segmentasi", ["None", "Edge Detection", "Regional Growing"])
-
-        if segmentation_type == "Regional Growing":
-            st.sidebar.header("Regional Growing")
-            seed_x = st.sidebar.number_input("Seed Point X", value=0, step=1)
-            seed_y = st.sidebar.number_input("Seed Point Y", value=0, step=1)
-            threshold = st.sidebar.slider("Threshold", 1, 255, 128)
-
-            seed_point = (seed_x, seed_y)
-        else:
-            seed_point = None
-            threshold = None
+        segmentation_type = st.sidebar.selectbox("Pilih metode segmentasi", ["None", "Edge Detection"])
 
         st.sidebar.header("Operasi Morfologi")
-        morphological_operation = st.sidebar.radio("Pilih operasi morfologi", ["None", "Dilation", "Erosion"])
+        morphological_operation = st.sidebar.radio("Pilih operasi morfologi", ["None", "Dilation", "Erosion", "Countour"])
 
         processed_image = original_image.copy()
         processed_image = apply_resize_rotate(processed_image, resize_factor, rotation_angle)
         processed_image = apply_filter(processed_image, filter_type)
-        processed_image = apply_segmentation(processed_image, segmentation_type, seed_point, threshold)
+        processed_image = apply_segmentation(processed_image, segmentation_type)
 
         if morphological_operation != "None":
             processed_image = apply_dilation_erosion(processed_image, morphological_operation)
