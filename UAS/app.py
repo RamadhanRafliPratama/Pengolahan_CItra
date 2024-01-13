@@ -3,41 +3,6 @@ import cv2
 from PIL import Image, ImageOps
 import numpy as np
 
-def apply_dilation_erosion(image, operation_type):
-    # Konversi ke citra grayscale jika belum
-    if len(image.shape) > 2:
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-    # Tentukan kernel untuk dilasi atau erosi
-    kernel = np.ones((5, 5), np.uint8)
-
-    # Lakukan operasi dilasi atau erosi
-    if operation_type == "dilation":
-        result_image = cv2.dilate(image, kernel, iterations=1)
-    elif operation_type == "erosion":
-        result_image = cv2.erode(image, kernel, iterations=1)
-    else:
-        result_image = image
-
-    return result_image
-
-def apply_emboss(image):
-    # Matriks kernel untuk filter emboss
-    kernel = np.array([[-2, -1, 0],
-                       [-1,  1, 1],
-                       [ 0,  1, 2]])
-
-    # Melakukan konvolusi dengan kernel emboss
-    emboss_image = cv2.filter2D(image, -1, kernel)
-
-    # Normalisasi hasil konvolusi untuk memastikan nilai piksel berada dalam rentang 0-255
-    emboss_image = cv2.normalize(emboss_image, None, 0, 255, cv2.NORM_MINMAX)
-
-    # Convert ke tipe data uint8
-    emboss_image = emboss_image.astype(np.uint8)
-
-    return emboss_image
-
 def apply_resize_rotate(image, resize_factor, rotation_angle):
     resized_image = cv2.resize(image, None, fx=resize_factor, fy=resize_factor)
     rotated_image = Image.fromarray(resized_image)
@@ -63,6 +28,41 @@ def apply_filter(image, filter_type):
         return cv2.bitwise_not(image)
     else:
         return image
+def apply_emboss(image):
+    # Matriks kernel untuk filter emboss
+    kernel = np.array([[-2, -1, 0],
+                       [-1,  1, 1],
+                       [ 0,  1, 2]])
+
+    # Melakukan konvolusi dengan kernel emboss
+    emboss_image = cv2.filter2D(image, -1, kernel)
+
+    # Normalisasi hasil konvolusi untuk memastikan nilai piksel berada dalam rentang 0-255
+    emboss_image = cv2.normalize(emboss_image, None, 0, 255, cv2.NORM_MINMAX)
+
+    # Convert ke tipe data uint8
+    emboss_image = emboss_image.astype(np.uint8)
+
+    return emboss_image
+
+def apply_dilation_erosion(image, operation_type):
+    # Konversi ke citra grayscale jika belum
+    if len(image.shape) > 2:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    # Tentukan kernel untuk dilasi atau erosi
+    kernel = np.ones((5, 5), np.uint8)
+
+    # Lakukan operasi dilasi atau erosi
+    if operation_type == "dilation":
+        result_image = cv2.dilate(image, kernel, iterations=1)
+    elif operation_type == "erosion":
+        result_image = cv2.erode(image, kernel, iterations=1)
+    else:
+        result_image = image
+
+    return result_image
+
 
 def apply_segmentation(image, segmentation_type, seed_point=None, threshold=None):
     if segmentation_type == "edge_detection":
