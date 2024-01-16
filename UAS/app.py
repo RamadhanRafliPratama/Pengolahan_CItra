@@ -101,7 +101,10 @@ def save_as_pdf(image):
 def main():
     st.title("Web Pengolahan Citra Sederhana")
 
-    uploaded_image = st.file_uploader("Pilih gambar", type=["jpg", "jpeg", "png"])
+    # ...
+
+if st.sidebar.button("Upload Gambar"):  # Ganti label tombol menjadi sesuai keinginan Anda
+    uploaded_image = st.sidebar.file_uploader("Pilih gambar", type=["jpg", "jpeg", "png"])
 
     if uploaded_image is not None:
         original_image = np.array(Image.open(uploaded_image))
@@ -111,6 +114,9 @@ def main():
             st.warning(f"Ukuran gambar terlalu besar. Otomatis menyesuaikan ukuran ke {max_image_size}x{max_image_size}")
             scale_factor = max_image_size / max(original_image.shape[0], original_image.shape[1])
             original_image = cv2.resize(original_image, (0, 0), fx=scale_factor, fy=scale_factor)
+
+# ...
+
 
         preview_image = original_image.copy()
         st.image(preview_image, caption="Gambar yang telah diunggah (Preview)", use_column_width=False)
