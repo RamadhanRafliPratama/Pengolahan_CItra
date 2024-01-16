@@ -99,7 +99,7 @@ def save_as_pdf(image):
     return pdf_output.getvalue()
 
 def main():
-    st.title("Aplikasi Pengolahan Gambar")
+    st.title("Web Pengolahan Citra Sederhana")
 
     uploaded_image = st.file_uploader("Pilih gambar", type=["jpg", "jpeg", "png"])
 
